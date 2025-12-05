@@ -1,6 +1,6 @@
 // components/badges.tsx
 
-import { cn, getDifficultyColor, getKitSizeLabel, getVehicleTypeLabel } from "@/lib/utils";
+import { cn, getComplexityColor, getKitSizeLabel, getVehicleTypeLabel } from "@/lib/utils";
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -36,10 +36,13 @@ export function KitSizeBadge({ size }: { size: string }) {
   );
 }
 
-export function DifficultyBadge({ difficulty }: { difficulty: string }) {
+export function ComplexityBadge({ complexity }: { complexity: string }) {
   return (
-    <Badge className={getDifficultyColor(difficulty)}>
-      {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+    <Badge className={getComplexityColor(complexity)}>
+      {complexity.charAt(0).toUpperCase() + complexity.slice(1)}
     </Badge>
   );
 }
+
+// Keep old name for backward compatibility
+export const DifficultyBadge = ComplexityBadge;

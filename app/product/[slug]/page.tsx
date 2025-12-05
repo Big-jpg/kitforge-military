@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getProductBySlug } from "@/lib/data";
 import { LiveryVariant } from "@/lib/types";
-import { VehicleTypeBadge, KitSizeBadge, DifficultyBadge } from "@/components/badges";
+import { VehicleTypeBadge, KitSizeBadge, ComplexityBadge } from "@/components/badges";
 import { formatPrice } from "@/lib/utils";
 import { ModelViewer } from "@/components/model-viewer";
 import { LiverySelector } from "@/components/livery-selector";
@@ -102,7 +102,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <div className="flex flex-wrap gap-2 mb-3">
                 <VehicleTypeBadge type={product.vehicleType} />
                 <KitSizeBadge size={product.kitSize} />
-                <DifficultyBadge difficulty={product.difficulty} />
+                <ComplexityBadge complexity={product.buildComplexity} />
               </div>
               <h1 className="text-4xl font-bold mb-3">{product.name}</h1>
               <p className="text-xl text-stone-400 mb-4">{product.shortDescription}</p>
@@ -114,17 +114,17 @@ export default function ProductPage({ params }: ProductPageProps) {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center space-x-3 p-4 bg-stone-900 rounded-lg border border-stone-800">
-                <Package className="h-5 w-5 text-amber-500" />
+                <Clock className="h-5 w-5 text-amber-500" />
                 <div>
-                  <div className="text-sm text-stone-400">Parts</div>
-                  <div className="font-semibold">{product.partsCount}</div>
+                  <div className="text-sm text-stone-400">Build Time</div>
+                  <div className="font-semibold">~{product.buildTimeMinutes} min</div>
                 </div>
               </div>
               <div className="flex items-center space-x-3 p-4 bg-stone-900 rounded-lg border border-stone-800">
-                <Clock className="h-5 w-5 text-amber-500" />
+                <Wrench className="h-5 w-5 text-amber-500" />
                 <div>
-                  <div className="text-sm text-stone-400">Print Time</div>
-                  <div className="font-semibold">~{product.printTimeEstimateHours}h</div>
+                  <div className="text-sm text-stone-400">Complexity</div>
+                  <div className="font-semibold capitalize">{product.buildComplexity}</div>
                 </div>
               </div>
             </div>
@@ -190,20 +190,16 @@ export default function ProductPage({ params }: ProductPageProps) {
                       <span className="text-stone-100 font-medium">{product.kitSize}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-stone-800">
-                      <span className="text-stone-400">Difficulty</span>
-                      <span className="text-stone-100 font-medium capitalize">{product.difficulty}</span>
+                      <span className="text-stone-400">Build Complexity</span>
+                      <span className="text-stone-100 font-medium capitalize">{product.buildComplexity}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-stone-800">
-                      <span className="text-stone-400">Parts Count</span>
-                      <span className="text-stone-100 font-medium">{product.partsCount}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-stone-800">
-                      <span className="text-stone-400">Print Time</span>
-                      <span className="text-stone-100 font-medium">~{product.printTimeEstimateHours} hours</span>
+                      <span className="text-stone-400">Build Time</span>
+                      <span className="text-stone-100 font-medium">~{product.buildTimeMinutes} minutes</span>
                     </div>
                     <div className="flex justify-between py-2">
-                      <span className="text-stone-400">Recommended Material</span>
-                      <span className="text-stone-100 font-medium">PLA / PLA+</span>
+                      <span className="text-stone-400">Includes</span>
+                      <span className="text-stone-100 font-medium">Display stand</span>
                     </div>
                   </div>
                 )}
@@ -214,12 +210,12 @@ export default function ProductPage({ params }: ProductPageProps) {
                       Sand any rough edges for best fit. No glue required - parts snap together.
                     </p>
                     <p>
-                      <strong>Recommended Settings:</strong> 0.2mm layer height, 20% infill, supports not required.
-                      Print with the sprue card flat on the bed.
-                    </p>
-                    <p>
                       <strong>Finishing:</strong> Model can be painted or hydro-dipped for custom liveries.
                       Includes display stand for desktop presentation.
+                    </p>
+                    <p>
+                      <strong>What's Included:</strong> Precision-cut kit card with all parts on a single sprue,
+                      display stand, and assembly instructions.
                     </p>
                   </div>
                 )}
