@@ -31,9 +31,8 @@ export type KitProduct = {
   kitSize: KitSize;
   shortDescription: string;
   longDescription: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
-  partsCount: number;
-  printTimeEstimateHours: number;
+  buildTimeMinutes: number;
+  buildComplexity: "beginner" | "intermediate" | "advanced";
   images: string[];
   modelUrl?: string; // Path to 3MF file
   basePriceAUD: number;

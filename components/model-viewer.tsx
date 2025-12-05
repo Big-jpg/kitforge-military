@@ -1,10 +1,10 @@
 // components/model-viewer.tsx
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 
 interface ModelViewerProps {
   modelUrl: string;
@@ -12,16 +12,23 @@ interface ModelViewerProps {
   className?: string;
 }
 
-export function ModelViewer({ modelUrl, textureUrl, className = "" }: ModelViewerProps) {
+export function ModelViewer({
+  modelUrl,
+  textureUrl,
+  className = "",
+}: ModelViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const modelRef = useRef<THREE.Group | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Initialize Three.js scene
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -32,28 +39,32 @@ export function ModelViewer({ modelUrl, textureUrl, className = "" }: ModelViewe
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
-      45,
+      35,
       containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 50, 200);
+    camera.position.set(0, 0, 5);
+    camera.up.set(0, 0, 1); // Z is up for 3D printing models
     cameraRef.current = camera;
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    renderer.setSize(
+      containerRef.current.clientWidth,
+      containerRef.current.clientHeight
+    );
     renderer.setPixelRatio(window.devicePixelRatio);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Controls
+    // Orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
-    controls.minDistance = 50;
-    controls.maxDistance = 500;
+    controls.minDistance = 2;
+    controls.maxDistance = 10;
     controlsRef.current = controls;
 
     // Lighting
@@ -61,41 +72,46 @@ export function ModelViewer({ modelUrl, textureUrl, className = "" }: ModelViewe
     scene.add(ambientLight);
 
     const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight1.position.set(100, 100, 100);
+    directionalLight1.position.set(5, 5, 5);
     scene.add(directionalLight1);
 
     const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-    directionalLight2.position.set(-100, 50, -100);
+    directionalLight2.position.set(-5, -5, 5);
     scene.add(directionalLight2);
 
-    // Grid helper
-    const gridHelper = new THREE.GridHelper(400, 40, 0x44403c, 0x292524);
-    scene.add(gridHelper);
-
     // Animation loop
-    function animate() {
-      requestAnimationFrame(animate);
-      if (controlsRef.current) controlsRef.current.update();
-      if (rendererRef.current && cameraRef.current && sceneRef.current) {
+    const animate = () => {
+      animationFrameRef.current = requestAnimationFrame(animate);
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
-    }
+    };
     animate();
 
-    // Handle resize
+    // Handle window resize
     const handleResize = () => {
-      if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
+      if (!containerRef.current || !cameraRef.current || !rendererRef.current)
+        return;
+
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(width, height);
     };
+
     window.addEventListener("resize", handleResize);
 
     // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       if (rendererRef.current && containerRef.current) {
         containerRef.current.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
@@ -113,103 +129,133 @@ export function ModelViewer({ modelUrl, textureUrl, className = "" }: ModelViewe
     setLoading(true);
     setError(null);
 
-    // Remove previous model
-    if (modelRef.current) {
-      sceneRef.current.remove(modelRef.current);
-      modelRef.current = null;
-    }
+    const loadingManager = new THREE.LoadingManager();
 
-    // Since 3MF loader is not available as npm package, we'll parse it manually
-    // 3MF is a ZIP file containing XML and 3D model data
-    fetch(modelUrl)
-      .then((response) => response.arrayBuffer())
-      .then(async (buffer) => {
-        try {
-          // For prototype, we'll create a placeholder 3D model
-          // In production, you would use a proper 3MF parser
-          const group = new THREE.Group();
+    loadingManager.onError = (url) => {
+      console.error("Error loading:", url);
+      setError("Failed to load 3D model");
+      setLoading(false);
+    };
 
-          // Create a simple aircraft-like shape as placeholder
-          const geometry = new THREE.BoxGeometry(100, 5, 150);
-          
-          // Load texture if provided
-          let material: THREE.Material;
-          if (textureUrl) {
-            const textureLoader = new THREE.TextureLoader();
-            const texture = await textureLoader.loadAsync(textureUrl);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(2, 2);
-            material = new THREE.MeshStandardMaterial({ 
-              map: texture,
-              metalness: 0.3,
-              roughness: 0.7,
-            });
-          } else {
-            material = new THREE.MeshStandardMaterial({ 
-              color: 0x646464,
-              metalness: 0.3,
-              roughness: 0.7,
-            });
-          }
+    const loader = new ThreeMFLoader(loadingManager);
 
-          const fuselage = new THREE.Mesh(geometry, material);
-          group.add(fuselage);
-
-          // Wings
-          const wingGeometry = new THREE.BoxGeometry(200, 2, 80);
-          const wing = new THREE.Mesh(wingGeometry, material);
-          wing.position.y = 0;
-          group.add(wing);
-
-          // Tail fins
-          const tailGeometry = new THREE.BoxGeometry(60, 30, 2);
-          const tail1 = new THREE.Mesh(tailGeometry, material);
-          tail1.position.set(0, 15, -70);
-          tail1.rotation.x = Math.PI / 6;
-          group.add(tail1);
-
-          const tail2 = new THREE.Mesh(tailGeometry, material);
-          tail2.position.set(0, 15, -70);
-          tail2.rotation.x = -Math.PI / 6;
-          group.add(tail2);
-
-          // Center the model
-          const box = new THREE.Box3().setFromObject(group);
-          const center = box.getCenter(new THREE.Vector3());
-          group.position.sub(center);
-
-          modelRef.current = group;
-          if (sceneRef.current) {
-            sceneRef.current.add(group);
-          }
-          setLoading(false);
-        } catch (err) {
-          console.error("Error creating model:", err);
-          setError("Failed to load 3D model");
-          setLoading(false);
+    loader.load(
+      modelUrl,
+      (group) => {
+        // Remove previous model if exists
+        if (modelRef.current && sceneRef.current) {
+          modelRef.current.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.geometry.dispose();
+              if (child.material) {
+                if (Array.isArray(child.material)) {
+                  child.material.forEach((mat) => mat.dispose());
+                } else {
+                  child.material.dispose();
+                }
+              }
+            }
+          });
+          sceneRef.current.remove(modelRef.current);
         }
-      })
-      .catch((err) => {
-        console.error("Error loading model file:", err);
-        setError("Failed to load model file");
+
+        // Center the model
+        const box = new THREE.Box3().setFromObject(group);
+        const center = box.getCenter(new THREE.Vector3());
+        group.position.sub(center);
+
+        // Scale to fit
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 3 / maxDim;
+        group.scale.multiplyScalar(scale);
+
+        modelRef.current = group;
+        if (sceneRef.current) {
+          sceneRef.current.add(group);
+        }
         setLoading(false);
-      });
-  }, [modelUrl, textureUrl]);
+      },
+      (progress) => {
+        // Progress callback
+        if (progress.lengthComputable) {
+          const percentComplete = (progress.loaded / progress.total) * 100;
+          console.log(`Loading: ${percentComplete.toFixed(2)}%`);
+        }
+      },
+      (error) => {
+        console.error("Error loading 3MF:", error);
+        setError("Failed to load 3D model");
+        setLoading(false);
+      }
+    );
+  }, [modelUrl]);
+
+  // Apply texture when it changes
+  useEffect(() => {
+    if (!modelRef.current || !textureUrl) return;
+
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+      textureUrl,
+      (texture) => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2);
+
+        modelRef.current?.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Create new material with texture
+            const material = new THREE.MeshStandardMaterial({
+              map: texture,
+              roughness: 0.8,
+              metalness: 0.2,
+            });
+
+            // Dispose old material
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach((mat) => mat.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+
+            child.material = material;
+          }
+        });
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading texture:", error);
+      }
+    );
+  }, [textureUrl]);
 
   return (
     <div className={`relative ${className}`}>
-      <div ref={containerRef} className="w-full h-full min-h-[400px] rounded-lg overflow-hidden" />
+      <div
+        ref={containerRef}
+        className="w-full h-full min-h-[400px] rounded-lg overflow-hidden bg-stone-900"
+      />
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-stone-900/80 rounded-lg">
-          <div className="text-stone-300">Loading 3D model...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-900/80">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-500 border-r-transparent"></div>
+            <p className="mt-2 text-sm text-stone-400">Loading 3D model...</p>
+          </div>
         </div>
       )}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-stone-900/80 rounded-lg">
-          <div className="text-red-400">{error}</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-900/80">
+          <div className="text-center text-red-400">
+            <p>{error}</p>
+          </div>
         </div>
       )}
+      <div className="absolute bottom-4 right-4 text-xs text-stone-500">
+        Use mouse to rotate, scroll to zoom
+      </div>
     </div>
   );
 }

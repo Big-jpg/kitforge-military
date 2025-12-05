@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { KitProduct } from "@/lib/types";
-import { VehicleTypeBadge, KitSizeBadge, DifficultyBadge } from "./badges";
+import { VehicleTypeBadge, KitSizeBadge, ComplexityBadge } from "./badges";
 import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
@@ -46,16 +46,15 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Meta */}
         <div className="flex items-center justify-between pt-2 border-t border-stone-700">
-          <DifficultyBadge difficulty={product.difficulty} />
+          <ComplexityBadge complexity={product.buildComplexity} />
           <span className="text-lg font-bold text-amber-500">
             {formatPrice(product.basePriceAUD)}
           </span>
         </div>
 
-        {/* Parts & Time */}
-        <div className="flex items-center justify-between text-xs text-stone-500">
-          <span>{product.partsCount} parts</span>
-          <span>~{product.printTimeEstimateHours}h print</span>
+        {/* Build Time */}
+        <div className="text-xs text-stone-500">
+          <span>~{product.buildTimeMinutes} min build</span>
         </div>
       </div>
     </Link>

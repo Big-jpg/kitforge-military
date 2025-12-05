@@ -1,7 +1,7 @@
 // app/page.tsx
 
 import Link from "next/link";
-import { ArrowRight, Printer, Wrench, Package, Trophy } from "lucide-react";
+import { ArrowRight, ShoppingCart, Wrench, Package, Trophy } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -22,8 +22,8 @@ export default function HomePage() {
               <span className="text-amber-500">Collectors</span>
             </h1>
             <p className="text-xl text-stone-400 mb-8">
-              Premium 3D-printed flat pack models that assemble into detailed military vehicles.
-              Print, snap, assemble, and display.
+              Precision-engineered flat pack models that assemble into detailed military vehicles.
+              Receive, snap, assemble, and display.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -51,11 +51,11 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500/10 border-2 border-amber-500 rounded-full mb-4">
-                <Printer className="h-8 w-8 text-amber-500" />
+                <ShoppingCart className="h-8 w-8 text-amber-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">1. Print</h3>
+              <h3 className="text-xl font-semibold mb-2">1. Order</h3>
               <p className="text-stone-400">
-                Download and 3D print your kit card on a standard FDM printer
+                Choose your kit and livery, then place your order
               </p>
             </div>
             <div className="text-center">

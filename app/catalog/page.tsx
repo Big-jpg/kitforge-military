@@ -54,12 +54,12 @@ export default function CatalogPage() {
         sorted.sort((a, b) => b.basePriceAUD - a.basePriceAUD);
         break;
       case "difficulty-asc":
-        const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3 };
-        sorted.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
+        const complexityOrder = { beginner: 1, intermediate: 2, advanced: 3 };
+        sorted.sort((a, b) => complexityOrder[a.buildComplexity] - complexityOrder[b.buildComplexity]);
         break;
       case "difficulty-desc":
-        const difficultyOrderDesc = { beginner: 3, intermediate: 2, advanced: 1 };
-        sorted.sort((a, b) => difficultyOrderDesc[a.difficulty] - difficultyOrderDesc[b.difficulty]);
+        const complexityOrderDesc = { beginner: 3, intermediate: 2, advanced: 1 };
+        sorted.sort((a, b) => complexityOrderDesc[a.buildComplexity] - complexityOrderDesc[b.buildComplexity]);
         break;
     }
 
@@ -73,7 +73,7 @@ export default function CatalogPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Kit Catalog</h1>
           <p className="text-stone-400">
-            Browse our collection of 3D-printed military kit cards
+            Browse our collection of military kit cards
           </p>
         </div>
 
